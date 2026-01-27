@@ -24,6 +24,7 @@ A comprehensive multi-tenant Discord marketplace platform for selling digital it
 - [Configuration](#configuration)
 - [Project Structure](#project-structure)
 - [API Documentation](#api-documentation)
+- [API Key Configuration](#api-key-configuration)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#contributing)
 - [License](#license)
@@ -570,32 +571,124 @@ Each bot exposes its own API on its assigned port:
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+## API Key Configuration
+
+This project uses several API keys for different purposes. This section explains how to configure them properly.
+
+### Key Relationships Overview
+
+| Key Name | Location | Purpose |
+|----------|----------|---------|
+| `INTERNAL_API_KEY` | `parent_api/.env` | Internal bot-to-API communication |
+| `API_KEY` (auth_utils) | `listing-bot/api/auth_utils.py` | Must match `INTERNAL_API_KEY` |
+| `API_KEY` | `parent_api/.env` | External API authentication |
+| `API_KEY` (attachment) | `listing-bot/.env` | Must match Parent API's `API_KEY` |
+| Hypixel API Key | `listing-bot/bot/util/constants.py` | Hypixel API access |
+| Skyblock Wrapper Key | `listing-bot/bot/util/fetch.py` | Skyblock data API authentication |
+
+### Step-by-Step Configuration
+
+#### 1. Internal API Key (Bot-to-API Communication)
+
+These two keys **must be identical** for the bot to communicate with the Parent API:
+
+**File 1:** `parent_api/.env`
+```env
+INTERNAL_API_KEY=your_secure_internal_key_here
+```
+
+**File 2:** `listing-bot/api/auth_utils.py`
+```python
+API_KEY = "your_secure_internal_key_here"
+```
+
+#### 2. External API Key (Dashboard & Attachments)
+
+These keys **must be identical** for dashboard authentication and file uploads:
+
+**File 1:** `parent_api/.env`
+```env
+API_KEY=your_secure_external_key_here
+```
+
+**File 2:** `listing-bot/.env`
+```env
+API_KEY=your_secure_external_key_here
+```
+
+The attachment handler (`listing-bot/bot/util/attachment_handler.py`) reads this from the environment.
+
+#### 3. Hypixel API Key
+
+Required for fetching Minecraft/Hypixel player data.
+
+1. Get your API key from the [Hypixel Developer Dashboard](https://developer.hypixel.net/)
+2. Edit `listing-bot/bot/util/constants.py`:
+
+```python
+api_key = "your_hypixel_api_key_here"
+```
+
+### Skyblock Wrapper (Optional)
+
+If you want full Skyblock profile data, you need to run a separate instance of the [skyblock-wrapper](https://github.com/noemtdotdev/skyblock-wrapper).
+
+#### Setup Steps:
+
+1. Clone and run the skyblock-wrapper service
+2. Configure the connection in `listing-bot/.env`:
+
+```env
+SKYBLOCK_API_HOST=127.0.0.1
+SKYBLOCK_API_PORT=3002
+```
+
+3. Update the API key in `listing-bot/bot/util/fetch.py` (line 87) to match your skyblock-wrapper's authentication key
+
+### Production Deployment Notes
+
+When deploying to production:
+
+1. **Replace all `localhost`/`127.0.0.1` references** with your server's actual IP address in:
+   - `listing-bot/.env`
+   - `parent_api/.env`
+   - Any hardcoded references in the codebase
+
+2. **Use strong, unique API keys** - generate them using a secure method:
+   ```bash
+   openssl rand -hex 32
+   ```
+
+3. **Never commit API keys** to version control - always use environment variables or `.env` files (which should be in `.gitignore`)
+
+### Quick Reference: Environment Variables
+
+**`listing-bot/.env`**
+```env
+TOKEN=your_discord_bot_token
+SERVER_HOST=127.0.0.1
+BOT_SERVICE_HOST=127.0.0.1
+PARENT_API_HOST=127.0.0.1
+PARENT_API_PORT=7000
+SKYBLOCK_API_HOST=127.0.0.1
+SKYBLOCK_API_PORT=3002
+API_KEY=your_external_api_key
+```
+
+**`parent_api/.env`**
+```env
+API_KEY=your_external_api_key
+INTERNAL_API_KEY=your_internal_api_key
+SERVER_HOST=127.0.0.1
+BOT_SERVICE_HOST=127.0.0.1
+SHOP_FRONTEND_HOST=127.0.0.1
+SHOP_FRONTEND_PORT=7878
+DISCORD_CLIENT_ID=your_client_id
+DISCORD_CLIENT_SECRET=your_client_secret
+DISCORD_REDIRECT_URI=http://127.0.0.1:7000/auth/discord/callback
+SESSION_LIFETIME_HOURS=24
+```
+
 ---
 
-<<<<<<< Updated upstream
-Made with care by [noemt.dev](https://noemt.dev)
-
-todo: api key information
-
-these keys should be set to the same:
-listing-bot\api\auth_utils.py
-INTERNAL_API_KEY in parent_api\api.py
-
-APP_API_KEY in parent_api\api.py (from the env)
-listing-bot\bot\util\attachment_handler.py
-
-you do require a hypixel api key from their developer dashboard
-enter it here:
-listing-bot\bot\util\constants.py
-
-seperate process info:
-you need to run an instance of https://github.com/noemtdotdev/skyblock-wrapper
-then, enter the port (and ip if you want to test locally on the same codebase) into listing-bot\bot\util\fetch.py
-(this also requires a hypixel api key)
-
-the api key you use for authentication there needs to be entered in listing-bot\bot\util\fetch.py
-
-replace ALL localhost with the actual servers ip that you are running on to make 100% sure that it runs (it should with localhost but you can never be sure enough)
-=======
 Made by [noemt.dev](https://noemt.dev), README.md by [ash](https://github.com/auradoescoding)
->>>>>>> Stashed changes
